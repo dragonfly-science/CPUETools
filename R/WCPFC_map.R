@@ -1,4 +1,13 @@
-WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_year = F, trans = 'identity', labq = quant, fun='sum', uncert = NULL){
+WCPFC_map_quant <- function(data,
+                            quant=NULL,
+                            lat = 'lat5',
+                            lon = 'lon5',
+                            by_year = F,
+                            trans = 'identity',
+                            labq = quant,
+                            fun='sum',
+                            uncert = NULL,
+                            limits=NULL){
 
   require(rlang)
 
@@ -32,7 +41,7 @@ WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_yea
     g1 <- ggplot(pdat)  +
       {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
       {if (class(pdat)=='sf') geom_sf(aes(fill=!!labq),data=ol)}+
-      scale_fill_viridis_c(option='E', trans = trans)
+      scale_fill_viridis_c(option='E', trans = trans, limits = limits)
   }
 
 
@@ -41,7 +50,7 @@ WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_yea
     coord_sf(xlim=c(110,225),ylim=c(-50,0)) +
     geom_hline(yintercept = 0, linetype=2) +
     theme_cowplot() +
-    theme(legend.position = c(0.08,0.4)
+    theme(legend.position = c(0.08,0.3)
     ) +
     labs(y='Latitude', x='Longitude')
 
