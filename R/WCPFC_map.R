@@ -1,21 +1,23 @@
-WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_year = F, trans = 'identity', labq = quant, uncert = NULL){
+WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_year = F, trans = 'identity', labq = quant, fun='sum', uncert = NULL){
 
+  require(rlang)
 
   lat <- sym(lat)
   lon <- sym(lon)
-  quant <- sym(quant)
+  quants <- sym(quant)
+  labq <- sym(labq)
  # browser()
   pdat <- data %>%
     {if (by_year) group_by(.,!!lon,!!lat,yy) else group_by(.,!!lon,!!lat)} %>%
-    summarise(!!labq := mean(!!quant,na.rm=T))
+    summarise(!!labq := do.call(fun,list(eval(parse_expr(quant)),na.rm=T)))
   #browser()
 
   if(!is.null(uncert)) {
     require(multiscales)
 
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon+2.5,y=!!lat+2.5,fill=zip(!!quant,uncert)))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!quant,uncert)),data=ol)}+
+      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,uncert)))} +
+      {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!labq,uncert)),data=ol)}+
       bivariate_scale("fill",
                       pal_vsup(values = cividis(8),max_desat = 0.1),
                       limits = list(c(0, 1), c(0,1)),
@@ -28,8 +30,8 @@ WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_yea
   } else {
 #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon+2.5,y=!!lat+2.5,fill=!!quant))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=!!quant),data=ol)}+
+      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
+      {if (class(pdat)=='sf') geom_sf(aes(fill=!!labq),data=ol)}+
       scale_fill_viridis_c(option='E', trans = trans)
   }
 
@@ -43,6 +45,6 @@ WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_yea
     ) +
     labs(y='Latitude', x='Longitude')
 
-  if (by_year) g1 + facet_wrap(~yy, ncol = 3)
+  if (by_year) g1 <- g1 + facet_wrap(~yy, ncol = 4) + theme_cowplot()
   print(g1)
 }
