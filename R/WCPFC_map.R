@@ -1,15 +1,20 @@
-WCPFC_map_quant <- function(data, quant, lat = 'lat5', lon = 'lon5', by_year = F, trans = 'I', labq = quant, uncert = NULL){
+WCPFC_map_quant <- function(data, quant=NULL, lat = 'lat5', lon = 'lon5', by_year = F, trans = 'identity', labq = quant, uncert = NULL){
 
+
+  lat <- sym(lat)
+  lon <- sym(lon)
+  quant <- sym(quant)
+ # browser()
   pdat <- data %>%
     {if (by_year) group_by(.,!!lon,!!lat,yy) else group_by(.,!!lon,!!lat)} %>%
     summarise(!!labq := mean(!!quant,na.rm=T))
-
+  #browser()
 
   if(!is.null(uncert)) {
     require(multiscales)
 
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=lon5+2.5,y=lat5+2.5,fill=zip(!!quant,uncert)))} +
+      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon+2.5,y=!!lat+2.5,fill=zip(!!quant,uncert)))} +
       {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!quant,uncert)),data=ol)}+
       bivariate_scale("fill",
                       pal_vsup(values = cividis(8),max_desat = 0.1),
@@ -21,15 +26,15 @@ WCPFC_map_quant <- function(data, quant, lat = 'lat5', lon = 'lon5', by_year = F
                       guide = "colourfan"
       )
   } else {
-
+#browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=lon5+2.5,y=lat5+2.5,fill=!!quant))} +
+      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon+2.5,y=!!lat+2.5,fill=!!quant))} +
       {if (class(pdat)=='sf') geom_sf(aes(fill=!!quant),data=ol)}+
       scale_fill_viridis_c(option='E', trans = trans)
   }
 
 
-  g1+   geom_sf(data=world) +
+  g1 <- g1+   geom_sf(data=world) +
     geom_sf(data=wcpfc, col='seagreen2',fill=NA) +
     coord_sf(xlim=c(110,225),ylim=c(-50,0)) +
     geom_hline(yintercept = 0, linetype=2) +
