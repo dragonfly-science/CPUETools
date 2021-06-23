@@ -1,9 +1,58 @@
 
+plot_CEs <- function(model, fx, resp = NULL, varlab = NULL, trans=NULL){
+  #browser()
+
+  if(length(varlab)==2) {
+
+    fx1<- strsplit(fx, ':')[[1]][1]
+    fx2<- strsplit(fx, ':')[[1]][2]
+
+    cdat <- model$data[[fx2]]*attr(model$data[[fx2]],'scaled:scale')+attr(model$data[[fx2]],'scaled:center')
+    cond <- c(quantile(cdat,0), mean(cdat), quantile(cdat,1))
+    cond <- (cond-attr(model$data[[fx2]],'scaled:center'))/attr(model$data[[fx2]],'scaled:scale')
+    conds <- data.frame(cond)
+    colnames(conds) <- fx2
+    CE <- conditional_effects(model, effects = fx, int_conditions = conds, plot=F)
+
+  }  else {
+    CE <- conditional_effects(model, effects = fx, plot=F)
+  }
+
+  if(length(varlab)==2) {
+
+    if(!is.null(attr(model$data[[fx1]],'scaled:center'))) {
+      CE[[fx]]['effect1__'] <- CE[[fx]]['effect1__']*attr(model$data[[fx1]],'scaled:scale')+attr(model$data[[fx1]],'scaled:center')
+      CE[[fx]][fx1] <- CE[[fx]][fx1]*attr(model$data[[fx1]],'scaled:scale')+attr(model$data[[fx1]],'scaled:center')
+    }
+    if(!is.null(attr(model$data[[fx2]],'scaled:center'))) {
+      CE[[fx]]['effect2__'] <-    factor(signif(unlist(CE[[fx]][fx2]*attr(model$data[[fx2]],'scaled:scale')+attr(model$data[[fx2]],'scaled:center')),2))
+      CE[[fx]][fx2] <- CE[[fx]][fx2]*attr(model$data[[fx2]],'scaled:scale')+attr(model$data[[fx2]],'scaled:center')
+
+    }
+  } else {
+    if(!is.null(attr(model$data[[fx]],'scaled:center'))) {
+
+      CE[[fx]][fx] <- CE[[fx]][fx]*attr(model$data[[fx]],'scaled:scale')+attr(model$data[[fx]],'scaled:center')
+      CE[[fx]]['effect1__'] <- CE[[fx]]['effect1__']*attr(model$data[[fx]],'scaled:scale')+attr(model$data[[fx]],'scaled:center')
+    }
+  }
+
+
+  if(!is.null(resp)) attr(CE[[fx]], "response") <- resp
+  if(!is.null(varlab)) attr(CE[[fx]], "effects") <- varlab
+
+  if(!is.null(trans)) CE[[fx]]['effect1__'] <- do.call(trans, list(CE[[fx]]['effect1__']))
+
+  CE[[fx]]$upper__[CE[[fx]]$upper__ > 5*max(CE[[fx]]$estimate__) ] <- 5*max(CE[[fx]]$estimate__)
+  brms:::plot.brms_conditional_effects(CE)
+}
+
+
 get_rand_Eff <- function(pred_data, fx){
   cpuedf <- pred_data %>%
     mutate(iid=paste0('r_',fx,'[', !!sym(fx), ',Intercept]'))
   ps <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'\\[')))
-  if(any(grepl('hu',s$formula))) try(pss <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'__hu\\['))))
+  if(any(grepl('hu',bmod$formula))) try(pss <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'__hu\\['))))
   if(!class(pss) == 'try-error') {
     pn <- names(ps)
     #browser()
@@ -63,20 +112,20 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
       mutate(cond_fx = cut(!!sym(fx), breaks=c(fxc - udiff, ll + udiff)),
              conds = as.numeric(cond_fx)) %>%
       inner_join(cecond) %>%
-      mutate(Eff = log(Eff))
+      mutate(Eff = log(Eff/gmean(Eff)))
 
     if(!is.null(pred_data))  {
       Effmean = bmod$data %>%
       mutate(cond_fx = cut(!!sym(fx), breaks=c(fxc - udiff, ll + udiff)),
              conds = as.numeric(cond_fx)) %>%
       inner_join(cecond) %>%
-      mutate(Eff = log(Eff)) %>% pull(Eff) %>% mean(na.rm=T)
+      mutate(Eff = log(Eff/gmean(Eff))) %>% pull(Eff) %>% mean(na.rm=T)
     } else {
       Effmean = cpuedf %>% pull(Eff) %>% mean(na.rm=T)
     }
 
   }
-
+#browser()
   infldf  <- cpuedf %>%
     mutate(centr=Eff-Effmean) %>%
     group_by(yy) %>%
@@ -94,7 +143,7 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
     scale_colour_manual('Influence',values=rev(relpal)) +
     theme(axis.text.x = element_blank(),
           axis.title.x = element_blank(),
-          plot.margin = margin(t = 10, r=0.5, b = 0, l = 1))
+          plot.margin = ggplot2::margin(t = 10, r=0.5, b = 0, l = 1))
 
 
 
@@ -104,7 +153,7 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
               .groups = "drop")
 
   pclims <- max(abs(covardf$Eff))
-
+  if(!is.null(attr(covardf[[fx]],'scaled:center'))) covardf[fx] <- covardf[[fx]]*attr(covardf[[fx]],'scaled:scale')+attr(covardf[[fx]],'scaled:center')
 
   if((!num | rand) & !inord){
     covardf %<>% ungroup() %>% arrange(Eff)
