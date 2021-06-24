@@ -7,13 +7,16 @@ plot_CEs <- function(model, fx, resp = NULL, varlab = NULL, trans=NULL){
     fx1<- strsplit(fx, ':')[[1]][1]
     fx2<- strsplit(fx, ':')[[1]][2]
 
-    cdat <- model$data[[fx2]]*attr(model$data[[fx2]],'scaled:scale')+attr(model$data[[fx2]],'scaled:center')
-    cond <- c(quantile(cdat,0), mean(cdat), quantile(cdat,1))
-    cond <- (cond-attr(model$data[[fx2]],'scaled:center'))/attr(model$data[[fx2]],'scaled:scale')
-    conds <- data.frame(cond)
-    colnames(conds) <- fx2
-    CE <- conditional_effects(model, effects = fx, int_conditions = conds, plot=F)
-
+    if(!is.null(attr(model$data[[fx2]],'scaled:scale'))) {
+      cdat <- model$data[[fx2]]*attr(model$data[[fx2]],'scaled:scale')+attr(model$data[[fx2]],'scaled:center')
+      cond <- c(quantile(cdat,0), mean(cdat), quantile(cdat,1))
+      cond <- (cond-attr(model$data[[fx2]],'scaled:center'))/attr(model$data[[fx2]],'scaled:scale')
+      conds <- data.frame(cond)
+      colnames(conds) <- fx2
+      CE <- conditional_effects(model, effects = fx, int_conditions = conds, plot=F)
+    } else {
+      CE <- conditional_effects(model, effects = fx, plot=F)
+    }
   }  else {
     CE <- conditional_effects(model, effects = fx, plot=F)
   }
@@ -82,13 +85,13 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
 
   if(rand){
 
- cpuedf <- get_rand_Eff(pred_data, fx)
+    cpuedf <- get_rand_Eff(pred_data, fx)
 
- if(!is.null(pred_data))  {
-   Effmean <- get_rand_Eff(bmod$data, fx) %>% pull(Eff) %>% mean(na.rm=T)
- } else {
-   Effmean = cpuedf %>% pull(Eff) %>% mean(na.rm=T)
- }
+    if(!is.null(pred_data))  {
+      Effmean <- get_rand_Eff(bmod$data, fx) %>% pull(Eff) %>% mean(na.rm=T)
+    } else {
+      Effmean = cpuedf %>% pull(Eff) %>% mean(na.rm=T)
+    }
 
   } else if (!num){
     cpuedf <- pred_data
@@ -98,7 +101,7 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
     cpuedf$Eff <- ps[as.numeric(as.factor(cpuedf[[fx]]))]
 
   } else {
-#browser()
+    #browser()
     ce <- conditional_effects(bmod,fx,plot=F)
     fxc <- unique(ce[[fx]]$effect1__)
     udiff <- diff(fxc)[1]/2
@@ -116,16 +119,16 @@ plot_infl <- function(fx, lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks
 
     if(!is.null(pred_data))  {
       Effmean = bmod$data %>%
-      mutate(cond_fx = cut(!!sym(fx), breaks=c(fxc - udiff, ll + udiff)),
-             conds = as.numeric(cond_fx)) %>%
-      inner_join(cecond) %>%
-      mutate(Eff = log(Eff/gmean(Eff))) %>% pull(Eff) %>% mean(na.rm=T)
+        mutate(cond_fx = cut(!!sym(fx), breaks=c(fxc - udiff, ll + udiff)),
+               conds = as.numeric(cond_fx)) %>%
+        inner_join(cecond) %>%
+        mutate(Eff = log(Eff/gmean(Eff))) %>% pull(Eff) %>% mean(na.rm=T)
     } else {
       Effmean = cpuedf %>% pull(Eff) %>% mean(na.rm=T)
     }
 
   }
-#browser()
+  #browser()
   infldf  <- cpuedf %>%
     mutate(centr=Eff-Effmean) %>%
     group_by(yy) %>%
