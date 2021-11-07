@@ -61,16 +61,18 @@ WCPFC_map_quant <- function(data,
     geom_sf(data=wcpfc, col='seagreen2',fill=NA) +
     coord_sf(xlim=c(110,225),ylim=c(-50,0)) +
     geom_hline(yintercept = 0, linetype=2) +
-    theme_cowplot() +
+    theme_cowplot(font_size = 12) +
     theme(legend.position = c(0.08,0.3),
           legend.text = element_text(size=8)
     ) +
     labs(y='Latitude', x='Longitude')
 
   if (!is.null(facet)) {
-    if (facet=='yy') g1 <- g1 + facet_wrap(~yy, ncol = 4) + theme_cowplot()
-    if (facet=='flag_id') g1 <- g1 + facet_wrap(~flag_id, ncol = 4) + theme_cowplot()
-    if (facet=='mm') g1 <- g1 + facet_wrap(~mm, ncol = 4) + theme_cowplot()
+    if (facet=='yy') g1 <- g1 + facet_wrap(~yy, ncol = floor(sqrt(length(unique(pdat$yy))))) + theme_cowplot(font_size = 12)
+    if (facet=='flag_id') g1 <- g1 + facet_wrap(~flag_id, ncol = floor(sqrt(length(unique(pdat$flag_id))))) + theme_cowplot(font_size = 12)
+    if (facet=='vessel_id') g1 <- g1 + facet_wrap(~vessel_id, ncol = floor(sqrt(length(unique(pdat$vessel_id))))) + theme_cowplot(font_size = 12)
+    if (facet=='mm') g1 <- g1 + facet_wrap(~mm, ncol = floor(sqrt(length(unique(pdat$mm))))) + theme_cowplot(font_size = 12)
+    if (facet=='Fleet') g1 <- g1 + facet_wrap(~Fleet, nrow = floor(sqrt(length(unique(pdat$Fleet))))) + theme_cowplot(font_size = 12)
   }
   g1
 }
