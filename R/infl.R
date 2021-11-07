@@ -70,11 +70,11 @@ plot_CEs <- function(model, fx, idx = 'yy', resp = NULL, varlab = NULL, trans_ef
 }
 
 
-get_rand_Eff <- function(pred_data, fx){
+get_rand_Eff <- function(pred_data, fx, bmod){
   cpuedf <- pred_data %>%
     mutate(iid=paste0('r_',fx,'[', !!sym(fx), ',Intercept]'))
   ps <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'\\[')))
-  if(any(grepl('hu',bmod$formula))) try(pss <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'__hu\\['))))
+  if(any(grepl('hu',bmod$formula))) pss <- try(colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'__hu\\[')))) else pss <- try(a+b)
   if(!class(pss) == 'try-error') {
     pn <- names(ps)
     #browser()
@@ -104,10 +104,10 @@ plot_infl <- function(fx, idx = 'yy', lab, bmod, plot_ylabs=F, resp_lab = "CPUE 
 
   if(rand){
 
-    cpuedf <- get_rand_Eff(pred_data, fx)
+    cpuedf <- get_rand_Eff(pred_data, fx, bmod)
 
     if(!is.null(pred_data))  {
-      Effmean <- get_rand_Eff(bmod$data, fx) %>% pull(Eff) %>% mean(na.rm=T)
+      Effmean <- get_rand_Eff(bmod$data, fx, bmod) %>% pull(Eff) %>% mean(na.rm=T)
     } else {
       Effmean = cpuedf %>% pull(Eff) %>% mean(na.rm=T)
     }
