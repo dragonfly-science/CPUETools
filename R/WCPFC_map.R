@@ -53,7 +53,8 @@ WCPFC_map_quant <- function(data,
     g1 <- ggplot(pdat)  +
       {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
       {if (class(pdat)=='sf') geom_sf(aes(fill=!!labq))}+
-      scale_fill_viridis_c(option='E', trans = trans, limits = limits)
+      scale_fill_viridis_c(option='E', trans = trans, limits = limits) +
+      scale_colour_viridis_c(option='E', trans = trans, limits = limits)
   }
 
 
