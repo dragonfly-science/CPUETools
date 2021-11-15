@@ -1,18 +1,20 @@
 NZ_map_quant <- function(data,
-                            quant=NULL,
-                            lat = 'start_latitude',
-                            lon = 'start_longitude',
-                            xlim = NULL,
-                            ylim = NULL,
-                            facet = NULL,
-                            trans = 'identity',
-                            labq = quant,
-                            fun='I',
-                            uncert = NULL,
-                            limits=NULL,
-                            fun_uncert='sum',
-                            uncert_lab = uncert,
-                            adj=0.05){
+                         quant=NULL,
+                         lat = 'start_latitude',
+                         lon = 'start_longitude',
+                         xlim = NULL,
+                         ylim = NULL,
+                         facet = NULL,
+                         trans = 'identity',
+                         labq = quant,
+                         fun='I',
+                         uncert = NULL,
+                         limits=NULL,
+                         fun_uncert='sum',
+                         uncert_lab = uncert,
+                         adj=0.05,
+                         pal=pals::ocean.delta,
+                         unc.cols=4){
 
   require(rlang)
 
@@ -24,22 +26,22 @@ NZ_map_quant <- function(data,
   # browser()
   if(fun != 'I'){
     pdat <- data %>%
-    {if (!is.null(facet)) { facets <- sym(facet); group_by(.,!!lon,!!lat,!!facets)} else group_by(.,!!lon,!!lat)} %>%
-    {if (!is.null(uncert)){
-      summarise(., !!labq := do.call(fun,list(eval(parse_expr(quant)))),
-                !!uncert_lab := do.call(fun_uncert,list(eval(parse_expr(uncert)))))
-    } else {
-      summarise(., !!labq := do.call(fun,list(eval(parse_expr(quant)))))
-    }
-    }} else {
-      pdat <- data %>%
-        {if (!is.null(uncert)){
-          mutate(., !!labq := eval(parse_expr(quant)),
-                    !!uncert_lab := eval(parse_expr(uncert)))
-        } else {
-          mutate(., !!labq := eval(parse_expr(quant)))
-        }
-    }}
+      {if (!is.null(facet)) { facets <- sym(facet); group_by(.,!!lon,!!lat,!!facets)} else group_by(.,!!lon,!!lat)} %>%
+      {if (!is.null(uncert)){
+        summarise(., !!labq := do.call(fun,list(eval(parse_expr(quant)))),
+                  !!uncert_lab := do.call(fun_uncert,list(eval(parse_expr(uncert)))))
+      } else {
+        summarise(., !!labq := do.call(fun,list(eval(parse_expr(quant)))))
+      }
+      }} else {
+        pdat <- data %>%
+          {if (!is.null(uncert)){
+            mutate(., !!labq := eval(parse_expr(quant)),
+                   !!uncert_lab := eval(parse_expr(uncert)))
+          } else {
+            mutate(., !!labq := eval(parse_expr(quant)))
+          }
+          }}
   #browser()
 
   if(!is.null(uncert)) {
@@ -50,8 +52,8 @@ NZ_map_quant <- function(data,
       {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))} +
       {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))}+
       bivariate_scale("fill",
-                       pal_vsup(values = viridis::cividis(32),
-                                unc_levels=6,max_desat = 0.1),
+                      pal_vsup(values = pal(2^(unc.cols-1)),
+                               unc_levels=unc.cols,max_desat = 0.01),
                       limits = list({if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))},
                                     c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T)*1.05,digits = 2),0.2))),
                       breaks = list(waiver(), c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(pdat[[uncert_lab]],digits = 2),0.2,na.rm=T))),
@@ -60,15 +62,15 @@ NZ_map_quant <- function(data,
                       trans = list(trans,'identity'),
                       guide = "colourfan" )+
       bivariate_scale("color",
-                      pal_vsup(values = viridis::cividis(32),
-                               unc_levels=6,max_desat = 0.1),
-                      limits = list({if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))},
-                                    c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T)*1.05,digits = 2),0.2))),
-                      breaks = list(waiver(), c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(pdat[[uncert_lab]],digits = 2),0.2,na.rm=T))),
-                      name = c(as_label(labq), as_label(uncert_lab)),
-                      labels = list(waiver(), function(x) c('Low', 'High')),
-                      trans = list(trans,'identity'),
-                      guide = "none" )
+                      pal_vsup(values = pal(2^(unc.cols-1)),
+                                            unc_levels=unc.cols,max_desat = 0.01),
+                               limits = list({if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))},
+                                             c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T)*1.05,digits = 2),0.2))),
+                               breaks = list(waiver(), c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(pdat[[uncert_lab]],digits = 2),0.2,na.rm=T))),
+                               name = c(as_label(labq), as_label(uncert_lab)),
+                               labels = list(waiver(), function(x) c('Low', 'High')),
+                               trans = list(trans,'identity'),
+                               guide = "none" )
   } else {
     #browser()
     g1 <- ggplot(pdat)  +
