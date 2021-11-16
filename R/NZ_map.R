@@ -10,6 +10,7 @@ NZ_map_quant <- function(data,
                          fun='I',
                          uncert = NULL,
                          limits=NULL,
+                         unc_limits=NULL,
                          fun_uncert='sum',
                          uncert_lab = uncert,
                          adj=0.05,
@@ -44,9 +45,19 @@ NZ_map_quant <- function(data,
           }}
   #browser()
 
+  if(!is.null(limits)) {
+    pdat[[labq]][pdat[[labq]]<limits[1]] <- limits[1]
+    pdat[[labq]][pdat[[labq]]>limits[2]] <- limits[2]
+  }
+  if(!is.null(unc_limits)) {
+    pdat[[uncert_lab]][pdat[[uncert_lab]]>unc_limits[2]] <- unc_limits[2]
+  }
+
   if(!is.null(uncert)) {
     require(multiscales)
 
+    unc_lims <-  if(!is.null(unc_limits)) unc_limits else c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T),digits = 2),0.2))
+    lims <- if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))
     #browser()
     g1 <- ggplot(pdat)  +
       {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))} +
@@ -54,23 +65,25 @@ NZ_map_quant <- function(data,
       bivariate_scale("fill",
                       pal_vsup(values = pal(2^(unc.cols-1)),
                                unc_levels=unc.cols,max_desat = 0.01),
-                      limits = list({if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))},
-                                    c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T)*1.05,digits = 2),0.2))),
-                      breaks = list(waiver(), c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(pdat[[uncert_lab]],digits = 2),0.2,na.rm=T))),
+                      limits = list(lims,
+                                    unc_lims),
+                      breaks = list(waiver(),
+                                    unc_lims),
                       name = c(as_label(labq), as_label(uncert_lab)),
-                      labels = list(waiver(), function(x) c('Low', 'High')),
+                      labels = list(waiver(), unc_lims),
                       trans = list(trans,'identity'),
                       guide = "colourfan" )+
       bivariate_scale("color",
                       pal_vsup(values = pal(2^(unc.cols-1)),
-                                            unc_levels=unc.cols,max_desat = 0.01),
-                               limits = list({if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))},
-                                             c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(max(pdat[[uncert_lab]],na.rm=T)*1.05,digits = 2),0.2))),
-                               breaks = list(waiver(), c(signif(min(pdat[[uncert_lab]],na.rm=T),digits = 2),max(signif(pdat[[uncert_lab]],digits = 2),0.2,na.rm=T))),
-                               name = c(as_label(labq), as_label(uncert_lab)),
-                               labels = list(waiver(), function(x) c('Low', 'High')),
-                               trans = list(trans,'identity'),
-                               guide = "none" )
+                               unc_levels=unc.cols,max_desat = 0.01),
+                      limits = list(lims,
+                                    unc_lims),
+                      breaks = list(waiver(),
+                                    unc_lims),
+                      name = c(as_label(labq), as_label(uncert_lab)),
+                      labels = list(waiver(), unc_lims),
+                      trans = list(trans,'identity'),
+                      guide = "none" )
   } else {
     #browser()
     g1 <- ggplot(pdat)  +
