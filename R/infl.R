@@ -1,6 +1,13 @@
 
-plot_CEs <- function(model, fx, idx = 'yy', resp = NULL, varlab = NULL, trans_eff=NULL, trans_resp=NULL, limits=NULL, dpar=NULL){
-  #browser()
+plot_CEs <- function(model,
+                     fx,
+                     idx = 'yy',
+                     resp = NULL,
+                     varlab = NULL,
+                     trans_eff=NULL,
+                     trans_resp=NULL,
+                     limits=NULL,
+                     dpar=NULL){
 
   if(length(varlab)==2) {
 
@@ -40,7 +47,6 @@ plot_CEs <- function(model, fx, idx = 'yy', resp = NULL, varlab = NULL, trans_ef
     }
   }
 
-
   if(!is.null(resp)) attr(CE[[fx]], "response") <- resp
   if(!is.null(varlab)) attr(CE[[fx]], "effects") <- varlab
 
@@ -53,18 +59,31 @@ plot_CEs <- function(model, fx, idx = 'yy', resp = NULL, varlab = NULL, trans_ef
 
   if(!is.null(CE[[fx]]$effect2__)) {
 
-    g <- ggplot(CE[[fx]]) +
-      geom_line(aes(x=effect1__, y= estimate__, col=effect2__))+
+    g <- ggplot(CE[[fx]], aes(x=effect1__, y= estimate__)) +
       xlab(attr(CE[[fx]],'effects')[1]) +
       ylab(attr(CE[[fx]],'response')[1]) +
       scale_color_viridis_d(attr(CE[[fx]],'effects')[2], option='E')
 
+    if(is.factor(CE[[fx]]$effect1__)){
+      g <- g + geom_pointrange(aes(ymin = lower__, ymax=upper__, col=effect2__))
+    } else {
+      g <- g + geom_line(aes(col=effect2__))+
+        geom_ribbon(aes(ymin = lower__, ymax=upper__, col=effect2__), alpha=0.2)
+    }
+
   } else {
+
     g <- ggplot(CE[[fx]],aes(x=effect1__, y= estimate__)) +
-      geom_line()+
-      geom_ribbon(aes(ymin = lower__, ymax=upper__), alpha=0.2)+
       xlab(attr(CE[[fx]],'effects')[1]) +
       ylab(attr(CE[[fx]],'response')[1])
+
+    if(is.factor(CE[[fx]]$effect1__)){
+      g <- g + geom_pointrange(aes(ymin = lower__, ymax=upper__))
+    } else {
+      g <- g + geom_line()+
+        geom_ribbon(aes(ymin = lower__, ymax=upper__), alpha=0.2)
+    }
+
   }
   return(g)
 }
@@ -87,7 +106,16 @@ get_rand_Eff <- function(pred_data, fx, bmod){
   cpuedf
 }
 
-plot_infl <- function(fx, idx = 'yy', lab, bmod, plot_ylabs=F, resp_lab = "CPUE (n/100 hooks)", pred_data = NULL, inord = F, trans=NULL){
+plot_infl <- function(fx,
+                      idx = 'yy',
+                      lab,
+                      bmod,
+                      plot_ylabs=F,
+                      resp_lab = "CPUE (n/100 hooks)",
+                      pred_data = NULL,
+                      inord = F,
+                      trans=NULL,
+                      xlabs='Year'){
 
   if(is.null(pred_data)) pred_data <- bmod$data
   theme_set(theme_cowplot(font_size=12))
@@ -196,7 +224,7 @@ plot_infl <- function(fx, idx = 'yy', lab, bmod, plot_ylabs=F, resp_lab = "CPUE 
   g2 <- ggplot(covardf, aes(!!sym(idx), fx, size=num, colour=Eff, fill=Eff)) +
     geom_point(shape=21, colour='grey50') +
     scale_size('Events',range=c(1,10)) +
-    ylab(lab) + xlab('\nYear') +
+    ylab(lab) + xlab(xlabs) +
     theme(axis.text.x = element_text(angle=45,hjust=1))
 
   if(!rand) g2 <- g2 +
