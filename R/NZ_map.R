@@ -60,8 +60,8 @@ NZ_map_quant <- function(data,
     lims <- if(!is.null(limits)) limits else c(signif(min(pdat[[labq]],na.rm=T)*(1-adj),2), signif(max(pdat[[labq]],na.rm=T)*(1+adj),2))
     #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))}+
+      {if (class(pdat)[1]!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))} +
+      {if (class(pdat)[1]=='sf') geom_sf(aes(fill=zip(!!labq,!!uncert_lab), col=zip(!!labq,!!uncert_lab)))}+
       bivariate_scale("fill",
                       pal_vsup(values = pal(2^(unc.cols-1)),
                                unc_levels=unc.cols,max_desat = 0.01),
@@ -87,8 +87,8 @@ NZ_map_quant <- function(data,
   } else {
     #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=!!labq,col=!!labq))}+
+      {if (class(pdat)[1]!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
+      {if (class(pdat)[1]=='sf') geom_sf(aes(fill=!!labq,col=!!labq))}+
       scale_fill_viridis_c(option='E', trans = trans, limits = limits)+
       scale_colour_viridis_c(option='E', trans = trans, limits = limits)
   }
