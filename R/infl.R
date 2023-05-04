@@ -90,14 +90,15 @@ plot_CEs <- function(model,
 
 
 get_rand_Eff <- function(pred_data, fx, bmod){
+  browser()
   cpuedf <- pred_data %>%
     mutate(iid=paste0('r_',fx,'[', !!sym(fx), ',Intercept]'))
-  ps <- colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'\\[')))
-  if(any(grepl('hu',bmod$formula))) pss <- try(colMeans(posterior_samples(bmod, pars=paste0('r_',fx,'__hu\\[')))) else pss <- try(a+b)
+  ps <- colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'\\['),regex = T) %>% select(-starts_with('.')))
+  if(any(grepl('hu',bmod$formula))) pss <- try(colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'__hu\\['),regex = T) %>% select(-starts_with('.')))) else pss <- try(a+b)
   if(!class(pss) == 'try-error') {
     pn <- names(ps)
     #browser()
-    ps <- log((1-inv_logit(pss))*exp(colMeans(posterior_samples(bmod,pars = "b_Intercept"))+ps))
+    ps <- log((1-inv_logit(pss))*exp(colMeans(as_draws_df(bmod,variable = "b_Intercept") %>% select(-starts_with('.')))+ps))
     ps = ps - mean(ps)
     names(ps) <- pn
   }
@@ -183,7 +184,7 @@ plot_infl <- function(fx,
     cpuedf %<>% mutate(!!sym(fx) := cond_fx)
 
   }
-  #browser()
+  browser()
   infldf  <- cpuedf %>%
     mutate(centr=Eff-Effmean) %>%
     group_by(!!sym(idx)) %>%
