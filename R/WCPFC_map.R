@@ -36,8 +36,8 @@ WCPFC_map_quant <- function(data,
 
     #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab)))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!labq,!!uncert_lab)))}+
+      {if (any(class(pdat)!='sf')) geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab)))} +
+      {if (any(class(pdat)=='sf')) geom_sf(aes(fill=zip(!!labq,!!uncert_lab)))}+
       bivariate_scale("fill",
                       pal_vsup(values = viridis::viridis(32),
                                unc_levels=6,max_desat = 0.1),
