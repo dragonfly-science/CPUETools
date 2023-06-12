@@ -10,7 +10,9 @@ WCPFC_map_quant <- function(data,
                             limits=NULL,
                             fun_uncert='sum',
                             uncert_lab = uncert,
-                            adj=0.05){
+                            adj=0.05,
+                            y1=-50,
+                            y2=50){
 
   require(rlang)
 
@@ -60,7 +62,7 @@ WCPFC_map_quant <- function(data,
 
   g1 <- g1+   geom_sf(data=world) +
     geom_sf(data=wcpfc, col='seagreen2',fill=NA) +
-    coord_sf(xlim=c(110,225),ylim=c(-50,0)) +
+    coord_sf(xlim=c(110,225),ylim=c(y1,y2)) +
     geom_hline(yintercept = 0, linetype=2) +
     theme_cowplot(font_size = 12) +
     theme(legend.position = c(0.08,0.3),
