@@ -90,7 +90,7 @@ plot_CEs <- function(model,
 
 
 get_rand_Eff <- function(pred_data, fx, bmod){
-  browser()
+
   cpuedf <- pred_data %>%
     mutate(iid=paste0('r_',fx,'[', !!sym(fx), ',Intercept]'))
   ps <- colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'\\['),regex = T) %>% select(-starts_with('.')))
