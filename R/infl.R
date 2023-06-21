@@ -184,7 +184,7 @@ plot_infl <- function(fx,
     cpuedf %<>% mutate(!!sym(fx) := cond_fx)
 
   }
-  browser()
+  #browser()
   infldf  <- cpuedf %>%
     mutate(centr=Eff-Effmean) %>%
     group_by(!!sym(idx)) %>%
