@@ -65,7 +65,7 @@ WCPFC_map_quant <- function(data,
     coord_sf(xlim=c(110,225),ylim=c(y1,y2)) +
     geom_hline(yintercept = 0, linetype=2) +
     theme_cowplot(font_size = 12) +
-    theme(legend.position = c(0.08,0.1),
+    theme(legend.position = c(0.06,0.2),
           legend.text = element_text(size=8)
     ) +
     labs(y='Latitude', x='Longitude')
