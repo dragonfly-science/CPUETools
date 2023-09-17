@@ -94,7 +94,7 @@ get_rand_Eff <- function(pred_data, fx, bmod){
   cpuedf <- pred_data %>%
     mutate(iid=paste0('r_',fx,'[', !!sym(fx), ',Intercept]'))
   ps <- colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'\\['),regex = T) %>% select(-starts_with('.')))
-  if(any(grepl('hu',bmod$formula))) pss <- try(colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'__hu\\['),regex = T) %>% select(-starts_with('.')))) else pss <- try(a+b)
+  if(any(grepl('hu',bmod$formula))) pss <- try(colMeans(as_draws_df(bmod, variable =paste0('r_',fx,'__hu\\['),regex = T) %>% select(-starts_with('.')))) else pss <- try(a+b, silent=T)
   if(!class(pss) == 'try-error') {
     pn <- names(ps)
     #browser()
