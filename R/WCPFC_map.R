@@ -10,7 +10,9 @@ WCPFC_map_quant <- function(data,
                             limits=NULL,
                             fun_uncert='sum',
                             uncert_lab = uncert,
-                            adj=0.05){
+                            adj=0.05,
+                            y1=-50,
+                            y2=50){
 
   require(rlang)
 
@@ -36,8 +38,8 @@ WCPFC_map_quant <- function(data,
 
     #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab)))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=zip(!!labq,!!uncert_lab)))}+
+      {if (any(class(pdat)!='sf')) geom_tile(aes(x=!!lon,y=!!lat,fill=zip(!!labq,!!uncert_lab)))} +
+      {if (any(class(pdat)=='sf')) geom_sf(aes(fill=zip(!!labq,!!uncert_lab)))}+
       bivariate_scale("fill",
                       pal_vsup(values = viridis::viridis(32),
                                unc_levels=6,max_desat = 0.1),
@@ -51,8 +53,8 @@ WCPFC_map_quant <- function(data,
   } else {
     #browser()
     g1 <- ggplot(pdat)  +
-      {if (class(pdat)!='sf') geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
-      {if (class(pdat)=='sf') geom_sf(aes(fill=!!labq))}+
+      {if (any(class(pdat)!='sf')) geom_tile(aes(x=!!lon,y=!!lat,fill=!!labq))} +
+      {if (any(class(pdat)=='sf')) geom_sf(aes(fill=!!labq))}+
       scale_fill_viridis_c(option='E', trans = trans, limits = limits) +
       scale_colour_viridis_c(option='E', trans = trans, limits = limits)
   }
@@ -60,10 +62,10 @@ WCPFC_map_quant <- function(data,
 
   g1 <- g1+   geom_sf(data=world) +
     geom_sf(data=wcpfc, col='seagreen2',fill=NA) +
-    coord_sf(xlim=c(110,225),ylim=c(-50,0)) +
+    coord_sf(xlim=c(110,225),ylim=c(y1,y2)) +
     geom_hline(yintercept = 0, linetype=2) +
     theme_cowplot(font_size = 12) +
-    theme(legend.position = c(0.08,0.3),
+    theme(legend.position = c(0.06,0.2),
           legend.text = element_text(size=8)
     ) +
     labs(y='Latitude', x='Longitude')
@@ -71,6 +73,7 @@ WCPFC_map_quant <- function(data,
   if (!is.null(facet)) {
     if (facet=='yy') g1 <- g1 + facet_wrap(~yy, ncol = floor(sqrt(length(unique(pdat$yy))))) + theme_cowplot(font_size = 12)
     if (facet=='flag_id') g1 <- g1 + facet_wrap(~flag_id, ncol = floor(sqrt(length(unique(pdat$flag_id))))) + theme_cowplot(font_size = 12)
+    if (facet=='program_code') g1 <- g1 + facet_wrap(~program_code, ncol = floor(sqrt(length(unique(pdat$program_code))))) + theme_cowplot(font_size = 12)
     if (facet=='vessel_id') g1 <- g1 + facet_wrap(~vessel_id, ncol = floor(sqrt(length(unique(pdat$vessel_id))))) + theme_cowplot(font_size = 12)
     if (facet=='mm') g1 <- g1 + facet_wrap(~mm, ncol = floor(sqrt(length(unique(pdat$mm))))) + theme_cowplot(font_size = 12)
     if (facet=='Fleet') g1 <- g1 + facet_wrap(~Fleet, nrow = floor(sqrt(length(unique(pdat$Fleet))))) + theme_cowplot(font_size = 12)
