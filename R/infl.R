@@ -116,7 +116,8 @@ plot_infl <- function(fx,
                       pred_data = NULL,
                       inord = F,
                       trans=NULL,
-                      xlabs='Year'){
+                      xlabs='Year',
+                      return_infl_df=FALSE){
 
   if(is.null(pred_data)) pred_data <- bmod$data
   theme_set(theme_cowplot(font_size=12))
@@ -194,6 +195,8 @@ plot_infl <- function(fx,
               Influ=exp(avinf)) %>%
     mutate(rel=ifelse(Influ<1, 'Negative', 'Positive'))
 
+  if(return_infl_df) return(infldf %>% mutate(var=!!lab))
+  
   g1 <- ggplot(infldf, aes(!!sym(idx), Influ,  colour=rel, group=NA)) +
     geom_hline(yintercept=1, linetype='dotted') +
     geom_line(colour='grey50') +
@@ -241,4 +244,5 @@ plot_infl <- function(fx,
 
   require(patchwork)
   g1/g2 + patchwork::plot_layout(guides = 'collect')
+  
 }
